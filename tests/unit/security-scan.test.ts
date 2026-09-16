@@ -39,6 +39,12 @@ function context(
 }
 
 describe("security scan", () => {
+  it("does not expose the scanner check as a package-manager install", () => {
+    const check = buildSecurityScanCheck({ mode: "local" });
+
+    expect(check.installable).toBe(false);
+  });
+
   it("scans only changed supported lockfiles with trusted tools", async () => {
     const check = buildSecurityScanCheck({ mode: "local" });
     const commands: Array<{ command: string; args: string[] }> = [];

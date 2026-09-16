@@ -173,6 +173,7 @@ export function buildSecurityScanCheck(
     label: "Mewra Dependency Guard — Security Scan",
     severity: "error",
     pack: "mewra-dependency-guard",
+    installable: false,
 
     appliesTo(diff: GitDiff): boolean {
       return changedLockfiles(diff.changedFiles).length > 0;

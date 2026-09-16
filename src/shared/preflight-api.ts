@@ -50,6 +50,8 @@ export type CheckRunner = {
   readonly label: string;
   readonly severity: CheckSeverity;
   readonly pack: string;
+  /** False when the check requires environment setup rather than a package install. */
+  readonly installable?: boolean;
   appliesTo(diff: GitDiff): boolean;
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 };

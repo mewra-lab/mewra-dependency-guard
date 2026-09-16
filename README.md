@@ -5,14 +5,19 @@ Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra 
 ## Requirements
 
 - VS Code 1.137 or newer
-- Mewra PreFlight installed (`mewra.mewra-preflight`)
+- Mewra PreFlight 0.5.0 or newer (`mewra.mewra-preflight`)
 - One execution mode:
   - `local` (default): both `osv-scanner` and `trivy` available on `PATH`.
   - `docker`: Docker available on `PATH`; images are pulled only after you explicitly select this mode.
 
 ## Install
 
-Install Mewra PreFlight v0.4.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight.
+Install Mewra PreFlight v0.5.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight.
+
+When OSV Scanner and Trivy are not configured, the Security Scan row explains
+the required local or Docker setup. It intentionally does not offer PreFlight's
+generic package-manager Install action because neither scanner is an npm
+package named `security-scan`.
 
 ## Configuration
 
