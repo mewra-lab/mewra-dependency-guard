@@ -5,14 +5,44 @@ Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra 
 ## Requirements
 
 - VS Code 1.137 or newer
-- Mewra PreFlight installed (`mewra.mewra-preflight`)
+- Mewra PreFlight 0.5.0 or newer (`mewra.mewra-preflight`)
 - One execution mode:
   - `local` (default): both `osv-scanner` and `trivy` available on `PATH`.
   - `docker`: Docker available on `PATH`; images are pulled only after you explicitly select this mode.
 
 ## Install
 
-Install Mewra PreFlight v0.4.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight.
+Install Mewra PreFlight v0.5.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight.
+
+When OSV Scanner and Trivy are not configured, the Security Scan row shows a
+**Set up** action. It intentionally does not offer PreFlight's generic
+package-manager Install action because neither scanner is an npm package named
+`security-scan`.
+
+## Using the extension
+
+Dependency Guard is a companion extension, not a separate VS Code sidebar. Its
+interface is the **Mewra PreFlight** dashboard, where it contributes the two
+dependency checks below. Install and enable Mewra PreFlight first, install
+Dependency Guard, then reload the VS Code window.
+
+1. Open a repository and run **Mewra PreFlight: Run Pipeline**.
+2. Change a supported lockfile. The **Mewra Dependency Guard — Security Scan**
+   row appears only when there is a relevant file in the diff.
+3. If the row shows `—`, click **Set up** and choose one execution mode:
+   - **Use Docker (recommended)** saves the workspace setting to `docker`.
+     Start Docker Desktop, then run the pipeline again.
+   - **Install local tools with Homebrew** saves `local` mode and runs
+     `brew install osv-scanner trivy` in a visible terminal on macOS after you
+     select that option.
+   - **Use existing local tools** selects `local` mode when both binaries are
+     already on `PATH`.
+4. Run the pipeline again. A green check means both scanners completed without
+   known vulnerability findings; a warning explains partial or unsuccessful
+   scans, and a red result lists detected vulnerabilities.
+
+The same setup picker is available from the Command Palette as **Mewra
+Dependency Guard: Set Up Scanner**.
 
 ## Configuration
 

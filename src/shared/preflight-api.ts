@@ -19,6 +19,7 @@ export type CheckFinding = {
   column?: number;
   message: string;
   rule?: string;
+  metadata?: Record<string, string>;
 };
 
 export type CheckResult = {
@@ -50,6 +51,10 @@ export type CheckRunner = {
   readonly label: string;
   readonly severity: CheckSeverity;
   readonly pack: string;
+  /** False when the check requires environment setup rather than a package install. */
+  readonly installable?: boolean;
+  /** Registered command that opens the check's own setup experience. */
+  readonly setupCommand?: string;
   appliesTo(diff: GitDiff): boolean;
   run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult>;
 };

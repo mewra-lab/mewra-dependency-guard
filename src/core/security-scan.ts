@@ -15,6 +15,7 @@ import {
   type ScannerMode,
   type ScannerName,
 } from "./scanner-command.js";
+import { parseCvssVector } from "./cvss.js";
 
 export type SecurityScanOptions = {
   mode: ScannerMode;
@@ -42,6 +43,70 @@ function asText(value: unknown, fallback = "unknown"): string {
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+function optionalText(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function trivyCvssScore(
+  vulnerability: Record<string, unknown>,
+): string | undefined {
+  const cvss = asRecord(vulnerability.CVSS);
+  if (!cvss) return undefined;
+  const scores = Object.values(cvss)
+    .map(asRecord)
+    .flatMap((source) => [source?.V3Score, source?.V2Score])
+    .filter((score): score is number => typeof score === "number");
+  const highest = Math.max(...scores);
+  return Number.isFinite(highest) ? highest.toFixed(1) : undefined;
+}
+
+function osvFixedVersion(
+  vulnerability: Record<string, unknown>,
+): string | undefined {
+  for (const affected of asArray(vulnerability.affected)) {
+    for (const range of asArray(asRecord(affected)?.ranges)) {
+      for (const event of asArray(asRecord(range)?.events)) {
+        const fixed = optionalText(asRecord(event)?.fixed);
+        if (fixed) return fixed;
+      }
+    }
+  }
+  return undefined;
+}
+
+function osvCvssScore(
+  vulnerability: Record<string, unknown>,
+): string | undefined {
+  const scores = asArray(vulnerability.severity)
+    .map(asRecord)
+    .filter((severity) => severity?.type?.toString().startsWith("CVSS"))
+    .map((severity) => optionalText(severity?.score))
+    .flatMap((score) => {
+      if (!score) return [];
+      const parsed = parseCvssVector(score) ?? Number.parseFloat(score);
+      return Number.isFinite(parsed) ? [parsed] : [];
+    });
+  const highest = Math.max(...scores);
+  return Number.isFinite(highest) ? highest.toFixed(1) : undefined;
+}
+
+function osvSeverity(vulnerability: Record<string, unknown>): string {
+  const databaseSeverity = optionalText(
+    asRecord(vulnerability.database_specific)?.severity,
+  )?.toUpperCase();
+  if (databaseSeverity === "MODERATE") return "MEDIUM";
+  if (["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(databaseSeverity ?? "")) {
+    return databaseSeverity!;
+  }
+  const cvss = osvCvssScore(vulnerability);
+  if (!cvss) return "UNKNOWN";
+  const score = Number.parseFloat(cvss);
+  if (score >= 9) return "CRITICAL";
+  if (score >= 7) return "HIGH";
+  if (score >= 4) return "MEDIUM";
+  return "LOW";
+}
+
 function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
   const parsed = asRecord(JSON.parse(stdout));
   if (!parsed || !Array.isArray(parsed.results)) return null;
@@ -53,13 +118,24 @@ function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
       const packageName = asText(packageInfo?.name);
       const packageVersion = asText(packageInfo?.version);
       return asArray(packageRecord?.vulnerabilities).map((vulnerability) => {
-        const vulnerabilityRecord = asRecord(vulnerability);
-        const id = asText(vulnerabilityRecord?.id);
+        const vulnerabilityRecord = asRecord(vulnerability) ?? {};
+        const id = asText(vulnerabilityRecord.id);
+        const fixedVersion = osvFixedVersion(vulnerabilityRecord);
+        const cvss = osvCvssScore(vulnerabilityRecord);
         return {
           file,
           line: 0,
           message: `${id} affects ${packageName}@${packageVersion}.`,
           rule: `osv:${id}`,
+          metadata: {
+            scanner: "OSV",
+            packageName,
+            installedVersion: packageVersion,
+            severity: osvSeverity(vulnerabilityRecord),
+            ...(fixedVersion ? { fixedVersion } : {}),
+            ...(cvss ? { cvss } : {}),
+            advisoryUrl: `https://osv.dev/vulnerability/${encodeURIComponent(id)}`,
+          },
         };
       });
     });
@@ -75,15 +151,28 @@ function parseTrivyFindings(
   return parsed.Results.flatMap((result) => {
     const resultRecord = asRecord(result);
     return asArray(resultRecord?.Vulnerabilities).map((vulnerability) => {
-      const vulnerabilityRecord = asRecord(vulnerability);
-      const id = asText(vulnerabilityRecord?.VulnerabilityID);
-      const packageName = asText(vulnerabilityRecord?.PkgName);
-      const packageVersion = asText(vulnerabilityRecord?.InstalledVersion);
+      const vulnerabilityRecord = asRecord(vulnerability) ?? {};
+      const id = asText(vulnerabilityRecord.VulnerabilityID);
+      const packageName = asText(vulnerabilityRecord.PkgName);
+      const packageVersion = asText(vulnerabilityRecord.InstalledVersion);
+      const severity = optionalText(vulnerabilityRecord.Severity);
+      const fixedVersion = optionalText(vulnerabilityRecord.FixedVersion);
+      const advisoryUrl = optionalText(vulnerabilityRecord.PrimaryURL);
+      const cvss = trivyCvssScore(vulnerabilityRecord);
       return {
         file,
         line: 0,
         message: `${id} affects ${packageName}@${packageVersion}.`,
         rule: `trivy:${id}`,
+        metadata: {
+          scanner: "Trivy",
+          packageName,
+          installedVersion: packageVersion,
+          ...(severity ? { severity } : {}),
+          ...(fixedVersion ? { fixedVersion } : {}),
+          ...(cvss ? { cvss } : {}),
+          ...(advisoryUrl ? { advisoryUrl } : {}),
+        },
       };
     });
   });
@@ -173,6 +262,8 @@ export function buildSecurityScanCheck(
     label: "Mewra Dependency Guard — Security Scan",
     severity: "error",
     pack: "mewra-dependency-guard",
+    installable: false,
+    setupCommand: "mewra-dependency-guard.configureScanner",
 
     appliesTo(diff: GitDiff): boolean {
       return changedLockfiles(diff.changedFiles).length > 0;

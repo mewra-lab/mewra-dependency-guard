@@ -2,7 +2,7 @@
   "name": "mewra-dependency-guard",
   "displayName": "Mewra Dependency Guard — Lockfile Security Scan",
   "description": "OSV and Trivy lockfile vulnerability checks for Mewra PreFlight.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -24,22 +24,14 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./dist/extension.cjs",
-  "categories": [
-    "Linters",
-    "Security",
-    "Other"
-  ],
-  "keywords": [
-    "security",
-    "vulnerability",
-    "osv",
-    "trivy",
-    "lockfile",
-    "preflight",
-    "mewra"
-  ],
   "contributes": {
+    "commands": [
+      {
+        "command": "mewra-dependency-guard.configureScanner",
+        "title": "Set Up Scanner",
+        "category": "Mewra Dependency Guard"
+      }
+    ],
     "configuration": {
       "title": "Mewra Dependency Guard",
       "properties": {
@@ -55,6 +47,21 @@
       }
     }
   },
+  "main": "./dist/extension.cjs",
+  "categories": [
+    "Linters",
+    "Security",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "vulnerability",
+    "osv",
+    "trivy",
+    "lockfile",
+    "preflight",
+    "mewra"
+  ],
   "lint-staged": {
     "*.{ts,tsx,js,mjs,json,md}": "prettier --write"
   },
