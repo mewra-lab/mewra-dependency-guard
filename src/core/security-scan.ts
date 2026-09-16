@@ -15,6 +15,7 @@ import {
   type ScannerMode,
   type ScannerName,
 } from "./scanner-command.js";
+import { parseCvssVector } from "./cvss.js";
 
 export type SecurityScanOptions = {
   mode: ScannerMode;
@@ -59,6 +60,53 @@ function trivyCvssScore(
   return Number.isFinite(highest) ? highest.toFixed(1) : undefined;
 }
 
+function osvFixedVersion(
+  vulnerability: Record<string, unknown>,
+): string | undefined {
+  for (const affected of asArray(vulnerability.affected)) {
+    for (const range of asArray(asRecord(affected)?.ranges)) {
+      for (const event of asArray(asRecord(range)?.events)) {
+        const fixed = optionalText(asRecord(event)?.fixed);
+        if (fixed) return fixed;
+      }
+    }
+  }
+  return undefined;
+}
+
+function osvCvssScore(
+  vulnerability: Record<string, unknown>,
+): string | undefined {
+  const scores = asArray(vulnerability.severity)
+    .map(asRecord)
+    .filter((severity) => severity?.type?.toString().startsWith("CVSS"))
+    .map((severity) => optionalText(severity?.score))
+    .flatMap((score) => {
+      if (!score) return [];
+      const parsed = parseCvssVector(score) ?? Number.parseFloat(score);
+      return Number.isFinite(parsed) ? [parsed] : [];
+    });
+  const highest = Math.max(...scores);
+  return Number.isFinite(highest) ? highest.toFixed(1) : undefined;
+}
+
+function osvSeverity(vulnerability: Record<string, unknown>): string {
+  const databaseSeverity = optionalText(
+    asRecord(vulnerability.database_specific)?.severity,
+  )?.toUpperCase();
+  if (databaseSeverity === "MODERATE") return "MEDIUM";
+  if (["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(databaseSeverity ?? "")) {
+    return databaseSeverity!;
+  }
+  const cvss = osvCvssScore(vulnerability);
+  if (!cvss) return "UNKNOWN";
+  const score = Number.parseFloat(cvss);
+  if (score >= 9) return "CRITICAL";
+  if (score >= 7) return "HIGH";
+  if (score >= 4) return "MEDIUM";
+  return "LOW";
+}
+
 function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
   const parsed = asRecord(JSON.parse(stdout));
   if (!parsed || !Array.isArray(parsed.results)) return null;
@@ -70,8 +118,10 @@ function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
       const packageName = asText(packageInfo?.name);
       const packageVersion = asText(packageInfo?.version);
       return asArray(packageRecord?.vulnerabilities).map((vulnerability) => {
-        const vulnerabilityRecord = asRecord(vulnerability);
-        const id = asText(vulnerabilityRecord?.id);
+        const vulnerabilityRecord = asRecord(vulnerability) ?? {};
+        const id = asText(vulnerabilityRecord.id);
+        const fixedVersion = osvFixedVersion(vulnerabilityRecord);
+        const cvss = osvCvssScore(vulnerabilityRecord);
         return {
           file,
           line: 0,
@@ -81,6 +131,9 @@ function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
             scanner: "OSV",
             packageName,
             installedVersion: packageVersion,
+            severity: osvSeverity(vulnerabilityRecord),
+            ...(fixedVersion ? { fixedVersion } : {}),
+            ...(cvss ? { cvss } : {}),
             advisoryUrl: `https://osv.dev/vulnerability/${encodeURIComponent(id)}`,
           },
         };

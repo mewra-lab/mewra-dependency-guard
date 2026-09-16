@@ -139,7 +139,7 @@ describe("security scan", () => {
       context(
         async (command) => ({
           stdout: command.endsWith("osv-scanner")
-            ? '{"results":[{"packages":[{"package":{"name":"example","version":"1.0.0"},"vulnerabilities":[{"id":"GHSA-test"}]}]}]}'
+            ? '{"results":[{"packages":[{"package":{"name":"example","version":"1.0.0"},"vulnerabilities":[{"id":"GHSA-test","database_specific":{"severity":"HIGH"},"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}],"affected":[{"ranges":[{"events":[{"introduced":"0"},{"fixed":"1.2.0"}]}]}]}]}]}]}'
             : '{"Results":[{"Vulnerabilities":[{"VulnerabilityID":"CVE-test","PkgName":"example-two","InstalledVersion":"2.0.0","Severity":"HIGH","FixedVersion":"2.1.0","PrimaryURL":"https://example.test/CVE-test","CVSS":{"nvd":{"V3Score":8.1}}}]}]}',
           stderr: "",
           code: 0,
@@ -159,6 +159,9 @@ describe("security scan", () => {
             scanner: "OSV",
             packageName: "example",
             installedVersion: "1.0.0",
+            severity: "HIGH",
+            fixedVersion: "1.2.0",
+            cvss: "9.8",
           },
         },
         {
