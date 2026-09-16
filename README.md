@@ -7,12 +7,12 @@
 <p align="center">
   <a href="https://github.com/mewra-lab/mewra-dependency-guard"><img src="https://img.shields.io/badge/GitHub-mewra--lab%2Fmewra--dependency--guard-181717?logo=github" alt="GitHub repository" /></a>
   <a href="https://github.com/mewra-lab/mewra-dependency-guard/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license" /></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-dependency-guard-vscode"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?logo=visualstudiocode" alt="VS Code Marketplace" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-dependency-guard-companion"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?logo=visualstudiocode" alt="VS Code Marketplace" /></a>
 </p>
 
 Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra PreFlight](https://github.com/mewra-lab/mewra-preflight). It registers two diff-scoped dependency-security checks: OSV Scanner plus Trivy scan only changed supported lockfiles, and the existing secure-source guard checks added dependency-source lines for insecure HTTP.
 
-The Marketplace extension ID is `mewra.mewra-dependency-guard-vscode`. The
+The Marketplace extension ID is `mewra.mewra-dependency-guard-companion`. The
 check IDs remain `mewra-dependency-guard:security-scan` and
 `dependency-guard:unsafe-source`, so existing PreFlight workspace configuration
 continues to work without changes.
@@ -32,7 +32,7 @@ Install Mewra PreFlight v0.5.0 or later first, then install this extension. It a
 From the VS Code Marketplace, search **Mewra Dependency Guard** or run:
 
 ```bash
-code --install-extension mewra.mewra-dependency-guard-vscode
+code --install-extension mewra.mewra-dependency-guard-companion
 ```
 
 For a GitHub Release VSIX, use **Extensions: Install from VSIX...**, then reload
