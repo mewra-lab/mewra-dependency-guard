@@ -8,6 +8,16 @@ The first release is `v0.1.0`.
 4. Create an annotated tag with the matching version, for example `v0.1.0`, and push it.
 5. The GitHub Actions release workflow validates, packages the versioned VSIX, generates `SHA256SUMS.txt`, and publishes the GitHub Release.
 
+## v0.2.0
+
+- Publishes the VSIX as `mewra-dependency-guard-vscode-0.2.0.vsix` under the new Marketplace identity
+  `mewra.mewra-dependency-guard-vscode` after the original Marketplace record
+  was removed and its name remained reserved.
+- Keeps the repository, display name, command IDs, configuration keys, and
+  PreFlight check IDs unchanged, so no `.mewra-preflight.json` migration is
+  required.
+- Adds Marketplace-facing README branding, install instructions, and links.
+
 ## v0.1.3
 
 - Adds the shared Mewra Marketplace icon used by Mewra Pounce and PreFlight.

@@ -1,8 +1,8 @@
 {
-  "name": "mewra-dependency-guard",
+  "name": "mewra-dependency-guard-vscode",
   "displayName": "Mewra Dependency Guard — Lockfile Security Scan",
   "description": "OSV and Trivy lockfile vulnerability checks for Mewra PreFlight.",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
