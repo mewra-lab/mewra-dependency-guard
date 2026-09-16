@@ -62,7 +62,7 @@ jobs:
 
       - name: Create checksum
         run: |
-          vsix="mewra-dependency-guard-vscode-${RELEASE_TAG#v}.vsix"
+          vsix="mewra-dependency-guard-companion-${RELEASE_TAG#v}.vsix"
           test -f "$vsix"
           sha256sum "$vsix" > SHA256SUMS.txt
 
@@ -70,7 +70,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          vsix="mewra-dependency-guard-vscode-${RELEASE_TAG#v}.vsix"
+          vsix="mewra-dependency-guard-companion-${RELEASE_TAG#v}.vsix"
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "$vsix" SHA256SUMS.txt --clobber
           else
