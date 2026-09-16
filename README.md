@@ -2,7 +2,7 @@
   <img src="./assets/brand/icon.png" width="84" height="84" alt="Mewra Dependency Guard logo" />
 </p>
 
-# Mewra Dependency Guard — Lockfile Security Scan
+# Mewra Dependency Guard — Supply Chain Scan
 
 <p align="center">
   <a href="https://github.com/mewra-lab/mewra-dependency-guard"><img src="https://img.shields.io/badge/GitHub-mewra--lab%2Fmewra--dependency--guard-181717?logo=github" alt="GitHub repository" /></a>

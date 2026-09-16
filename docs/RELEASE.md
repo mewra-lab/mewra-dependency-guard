@@ -8,6 +8,12 @@ The first release is `v0.1.0`.
 4. Create an annotated tag with the matching version, for example `v0.1.0`, and push it.
 5. The GitHub Actions release workflow validates, packages the versioned VSIX, generates `SHA256SUMS.txt`, and publishes the GitHub Release.
 
+## v0.2.1
+
+- Uses the distinct Marketplace display name **Mewra Dependency Guard — Supply
+  Chain Scan** so a removed extension's retained display name cannot block the
+  new listing.
+
 ## v0.2.0
 
 - Publishes the VSIX as `mewra-dependency-guard-vscode-0.2.0.vsix` under the new Marketplace identity
