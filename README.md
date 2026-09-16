@@ -1,6 +1,21 @@
-# Mewra Dependency Guard
+<p align="center">
+  <img src="./assets/brand/icon.png" width="84" height="84" alt="Mewra Dependency Guard logo" />
+</p>
+
+# Mewra Dependency Guard — Lockfile Security Scan
+
+<p align="center">
+  <a href="https://github.com/mewra-lab/mewra-dependency-guard"><img src="https://img.shields.io/badge/GitHub-mewra--lab%2Fmewra--dependency--guard-181717?logo=github" alt="GitHub repository" /></a>
+  <a href="https://github.com/mewra-lab/mewra-dependency-guard/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-dependency-guard-vscode"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?logo=visualstudiocode" alt="VS Code Marketplace" /></a>
+</p>
 
 Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra PreFlight](https://github.com/mewra-lab/mewra-preflight). It registers two diff-scoped dependency-security checks: OSV Scanner plus Trivy scan only changed supported lockfiles, and the existing secure-source guard checks added dependency-source lines for insecure HTTP.
+
+The Marketplace extension ID is `mewra.mewra-dependency-guard-vscode`. The
+check IDs remain `mewra-dependency-guard:security-scan` and
+`dependency-guard:unsafe-source`, so existing PreFlight workspace configuration
+continues to work without changes.
 
 ## Requirements
 
@@ -13,6 +28,16 @@ Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra 
 ## Install
 
 Install Mewra PreFlight v0.5.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight.
+
+From the VS Code Marketplace, search **Mewra Dependency Guard** or run:
+
+```bash
+code --install-extension mewra.mewra-dependency-guard-vscode
+```
+
+For a GitHub Release VSIX, use **Extensions: Install from VSIX...**, then reload
+the VS Code window. Installing from a VSIX disables automatic Marketplace
+updates by default.
 
 When OSV Scanner and Trivy are not configured, the Security Scan row shows a
 **Set up** action. It intentionally does not offer PreFlight's generic
