@@ -43,6 +43,7 @@ describe("security scan", () => {
     const check = buildSecurityScanCheck({ mode: "local" });
 
     expect(check.installable).toBe(false);
+    expect(check.setupCommand).toBe("mewra-dependency-guard.configureScanner");
   });
 
   it("scans only changed supported lockfiles with trusted tools", async () => {

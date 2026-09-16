@@ -174,6 +174,7 @@ export function buildSecurityScanCheck(
     severity: "error",
     pack: "mewra-dependency-guard",
     installable: false,
+    setupCommand: "mewra-dependency-guard.configureScanner",
 
     appliesTo(diff: GitDiff): boolean {
       return changedLockfiles(diff.changedFiles).length > 0;
