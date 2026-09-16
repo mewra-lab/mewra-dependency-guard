@@ -140,7 +140,7 @@ describe("security scan", () => {
         async (command) => ({
           stdout: command.endsWith("osv-scanner")
             ? '{"results":[{"packages":[{"package":{"name":"example","version":"1.0.0"},"vulnerabilities":[{"id":"GHSA-test"}]}]}]}'
-            : '{"Results":[{"Vulnerabilities":[{"VulnerabilityID":"CVE-test","PkgName":"example-two","InstalledVersion":"2.0.0"}]}]}',
+            : '{"Results":[{"Vulnerabilities":[{"VulnerabilityID":"CVE-test","PkgName":"example-two","InstalledVersion":"2.0.0","Severity":"HIGH","FixedVersion":"2.1.0","PrimaryURL":"https://example.test/CVE-test","CVSS":{"nvd":{"V3Score":8.1}}}]}]}',
           stderr: "",
           code: 0,
         }),
@@ -155,11 +155,24 @@ describe("security scan", () => {
           file: "package-lock.json",
           message: "GHSA-test affects example@1.0.0.",
           rule: "osv:GHSA-test",
+          metadata: {
+            scanner: "OSV",
+            packageName: "example",
+            installedVersion: "1.0.0",
+          },
         },
         {
           file: "package-lock.json",
           message: "CVE-test affects example-two@2.0.0.",
           rule: "trivy:CVE-test",
+          metadata: {
+            scanner: "Trivy",
+            packageName: "example-two",
+            installedVersion: "2.0.0",
+            severity: "HIGH",
+            fixedVersion: "2.1.0",
+            cvss: "8.1",
+          },
         },
       ],
     });

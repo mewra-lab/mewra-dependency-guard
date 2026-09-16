@@ -19,6 +19,7 @@ export type CheckFinding = {
   column?: number;
   message: string;
   rule?: string;
+  metadata?: Record<string, string>;
 };
 
 export type CheckResult = {

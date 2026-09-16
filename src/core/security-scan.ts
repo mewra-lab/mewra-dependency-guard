@@ -42,6 +42,23 @@ function asText(value: unknown, fallback = "unknown"): string {
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+function optionalText(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function trivyCvssScore(
+  vulnerability: Record<string, unknown>,
+): string | undefined {
+  const cvss = asRecord(vulnerability.CVSS);
+  if (!cvss) return undefined;
+  const scores = Object.values(cvss)
+    .map(asRecord)
+    .flatMap((source) => [source?.V3Score, source?.V2Score])
+    .filter((score): score is number => typeof score === "number");
+  const highest = Math.max(...scores);
+  return Number.isFinite(highest) ? highest.toFixed(1) : undefined;
+}
+
 function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
   const parsed = asRecord(JSON.parse(stdout));
   if (!parsed || !Array.isArray(parsed.results)) return null;
@@ -60,6 +77,12 @@ function parseOsvFindings(file: string, stdout: string): CheckFinding[] | null {
           line: 0,
           message: `${id} affects ${packageName}@${packageVersion}.`,
           rule: `osv:${id}`,
+          metadata: {
+            scanner: "OSV",
+            packageName,
+            installedVersion: packageVersion,
+            advisoryUrl: `https://osv.dev/vulnerability/${encodeURIComponent(id)}`,
+          },
         };
       });
     });
@@ -75,15 +98,28 @@ function parseTrivyFindings(
   return parsed.Results.flatMap((result) => {
     const resultRecord = asRecord(result);
     return asArray(resultRecord?.Vulnerabilities).map((vulnerability) => {
-      const vulnerabilityRecord = asRecord(vulnerability);
-      const id = asText(vulnerabilityRecord?.VulnerabilityID);
-      const packageName = asText(vulnerabilityRecord?.PkgName);
-      const packageVersion = asText(vulnerabilityRecord?.InstalledVersion);
+      const vulnerabilityRecord = asRecord(vulnerability) ?? {};
+      const id = asText(vulnerabilityRecord.VulnerabilityID);
+      const packageName = asText(vulnerabilityRecord.PkgName);
+      const packageVersion = asText(vulnerabilityRecord.InstalledVersion);
+      const severity = optionalText(vulnerabilityRecord.Severity);
+      const fixedVersion = optionalText(vulnerabilityRecord.FixedVersion);
+      const advisoryUrl = optionalText(vulnerabilityRecord.PrimaryURL);
+      const cvss = trivyCvssScore(vulnerabilityRecord);
       return {
         file,
         line: 0,
         message: `${id} affects ${packageName}@${packageVersion}.`,
         rule: `trivy:${id}`,
+        metadata: {
+          scanner: "Trivy",
+          packageName,
+          installedVersion: packageVersion,
+          ...(severity ? { severity } : {}),
+          ...(fixedVersion ? { fixedVersion } : {}),
+          ...(cvss ? { cvss } : {}),
+          ...(advisoryUrl ? { advisoryUrl } : {}),
+        },
       };
     });
   });

@@ -21,6 +21,11 @@ package-manager Install action because neither scanner is an npm package named
 
 ## Using the extension
 
+Dependency Guard is a companion extension, not a separate VS Code sidebar. Its
+interface is the **Mewra PreFlight** dashboard, where it contributes the two
+dependency checks below. Install and enable Mewra PreFlight first, install
+Dependency Guard, then reload the VS Code window.
+
 1. Open a repository and run **Mewra PreFlight: Run Pipeline**.
 2. Change a supported lockfile. The **Mewra Dependency Guard — Security Scan**
    row appears only when there is a relevant file in the diff.
