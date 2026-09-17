@@ -77,7 +77,7 @@
     "prepare": "husky",
     "validate": "pnpm format:check && pnpm check && pnpm test && pnpm build",
     "vscode:prepublish": "pnpm build",
-    "package": "vsce package --no-dependencies"
+    "package": "node scripts/package.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.13.4",

@@ -8,6 +8,11 @@ The first release is `v0.1.0`.
 4. Create an annotated tag with the matching version, for example `v0.1.0`, and push it.
 5. The GitHub Actions release workflow validates, packages the versioned VSIX, generates `SHA256SUMS.txt`, and publishes the GitHub Release.
 
+`pnpm package` writes local package output to `artifacts/`. The directory is
+tracked only with a placeholder; VSIX files and checksums are ignored and the
+directory is excluded from the extension package. GitHub Releases remain the
+distributable archive of record.
+
 ## v0.3.0
 
 - Uses the Marketplace extension identity

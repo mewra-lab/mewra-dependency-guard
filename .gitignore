@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.vsix
 coverage/
+artifacts/*.vsix
+artifacts/SHA256SUMS.txt
