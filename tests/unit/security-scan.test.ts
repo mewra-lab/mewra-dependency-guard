@@ -1,9 +1,15 @@
-import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { resolveWorkspaceFile } from "../../src/core/lockfiles.js";
-import { buildSecurityScanCheck } from "../../src/core/security-scan.js";
+import {
+  discoverSupportedLockfiles,
+  resolveWorkspaceFile,
+} from "../../src/core/lockfiles.js";
+import {
+  buildSecurityScanCheck,
+  runSecurityScan,
+} from "../../src/core/security-scan.js";
 import { dependencyUnsafeSourceCheck } from "../../src/core/unsafe-source.js";
 import type { PreFlightContext } from "../../src/shared/preflight-api.js";
 
@@ -84,6 +90,55 @@ describe("security scan", () => {
       scannedPath,
       scannedPath,
     ]);
+  });
+
+  it("discovers a bounded safe workspace scope for an explicit full scan", async () => {
+    await Promise.all([
+      mkdir(join(workspaceRoot, "apps", "web"), { recursive: true }),
+      mkdir(join(workspaceRoot, "node_modules", "ignored"), {
+        recursive: true,
+      }),
+    ]);
+    await Promise.all([
+      writeFile(join(workspaceRoot, "apps", "web", "yarn.lock"), "# lock"),
+      writeFile(
+        join(workspaceRoot, "node_modules", "ignored", "package-lock.json"),
+        "{}",
+      ),
+    ]);
+    await symlink(
+      join(workspaceRoot, "package-lock.json"),
+      join(workspaceRoot, "apps", "web", "Cargo.lock"),
+    );
+
+    const discovery = await discoverSupportedLockfiles(workspaceRoot);
+
+    expect(discovery).toEqual({
+      files: ["apps/web/yarn.lock", "package-lock.json", "pnpm-lock.yaml"],
+      truncated: false,
+    });
+    await rm(join(workspaceRoot, "apps", "web", "Cargo.lock"));
+
+    const result = await runSecurityScan(
+      discovery.files,
+      context(
+        async (command) => ({
+          stdout: command.endsWith("osv-scanner")
+            ? '{"results":[]}'
+            : '{"Results":[]}',
+          stderr: "",
+          code: 0,
+        }),
+        async (name) => `/trusted/${name}`,
+      ),
+      { mode: "local" },
+      "workspace",
+    );
+
+    expect(result).toMatchObject({
+      status: "pass",
+      message: "No known vulnerabilities found in lockfiles.",
+    });
   });
 
   it("warns instead of passing when a scanner emits malformed JSON", async () => {

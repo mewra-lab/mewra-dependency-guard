@@ -10,7 +10,7 @@
   <a href="https://marketplace.visualstudio.com/items?itemName=mewra.mewra-dependency-guard-companion"><img src="https://img.shields.io/badge/VS_Code-Marketplace-007ACC?logo=visualstudiocode" alt="VS Code Marketplace" /></a>
 </p>
 
-Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra PreFlight](https://github.com/mewra-lab/mewra-preflight). It registers two diff-scoped dependency-security checks: OSV Scanner plus Trivy scan only changed supported lockfiles, and the existing secure-source guard checks added dependency-source lines for insecure HTTP.
+Mewra Dependency Guard is an open-source VS Code companion extension for [Mewra PreFlight](https://github.com/mewra-lab/mewra-preflight). It registers two diff-scoped dependency-security checks: OSV Scanner plus Trivy scan only changed supported lockfiles, and the existing secure-source guard checks added dependency-source lines for insecure HTTP. It also offers a separate, user-invoked full scan for an intentional whole-workspace audit.
 
 The Marketplace extension ID is `mewra.mewra-dependency-guard-companion`. The
 check IDs remain `mewra-dependency-guard:security-scan` and
@@ -69,6 +69,28 @@ Dependency Guard, then reload the VS Code window.
 The same setup picker is available from the Command Palette as **Mewra
 Dependency Guard: Set Up Scanner**.
 
+### Full dependency scan
+
+The PreFlight row remains diff-scoped by design. To audit dependencies even
+when there is no Git change, open the Command Palette and run **Mewra
+Dependency Guard: Run Full Dependency Scan**.
+
+- In a multi-root VS Code window, it uses the active editor's workspace folder;
+  otherwise it asks you which folder to scan.
+- It discovers supported lockfiles outside generated/dependency directories
+  (`node_modules`, `vendor`, `dist`, `.git`, and similar), skips symlinks, and
+  validates each selected regular file is still within that folder before it is
+  passed to a scanner.
+- The command refuses to continue when more than 32 supported lockfiles are
+  found. Open the relevant repository folder directly to make the audit scope
+  deliberate.
+- Results appear in the **Mewra Dependency Guard** output channel, including
+  package, severity, CVSS score, fixed version, and advisory URL whenever the
+  scanner provides them.
+
+This command does not add results to the PreFlight dashboard or alter PR/MR
+gating. It is an explicit audit and never runs automatically.
+
 ## Configuration
 
 ```json
@@ -83,7 +105,9 @@ The scanners may contact their vulnerability databases. Docker mode is not selec
 
 ## Supported files
 
-The check runs only when the current PreFlight diff changes one of these files:
+The PreFlight check runs only when the current diff changes one of these files.
+The explicit full-scan command can discover the same files across the selected
+workspace:
 
 - `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`
 - `go.mod`, `Cargo.lock`, `composer.lock`, `Gemfile.lock`
@@ -101,6 +125,7 @@ pnpm validate
 - Scanner commands use fixed argument arrays; no workspace value is interpolated into a shell command.
 - Local OSV Scanner, Trivy, and Docker commands resolve only from trusted user or system locations, never `node_modules` or another executable in the opened workspace.
 - A changed lockfile must be a regular, non-symlink file that resolves inside the workspace before it is scanned.
+- The explicit full scan is bounded to 32 supported lockfiles and skips generated/dependency directories and symbolic links; it never runs automatically.
 - Docker mode rejects workspace paths that cannot be represented as a safe Docker mount argument.
 - A missing scanner is `not-configured`; a scanner failure or malformed JSON is a visible warning, never a false pass.
 - This extension does not scan secrets or source trees. The secure-source guard examines only added lines in changed dependency manifests and lockfiles; PreFlight's existing secret check remains responsible for that scope.
