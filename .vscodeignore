@@ -18,3 +18,4 @@ PRIVACY.md
 **/*.map
 node_modules/**
 *.vsix
+artifacts/**
