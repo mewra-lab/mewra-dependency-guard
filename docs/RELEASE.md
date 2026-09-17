@@ -13,6 +13,16 @@ tracked only with a placeholder; VSIX files and checksums are ignored and the
 directory is excluded from the extension package. GitHub Releases remain the
 distributable archive of record.
 
+## v0.4.0
+
+- Adds **Mewra Dependency Guard: Run Full Dependency Scan** for an intentional
+  workspace-wide OSV/Trivy audit when no lockfile is changed.
+- Keeps the PreFlight Security Scan diff-scoped and keeps full-scan results out
+  of pipeline/PR gating.
+- Makes multi-root selection explicit, excludes generated/dependency paths and
+  symlinks, caps discovery at 32 lockfiles, and uses fixed commands resolved
+  only from trusted user/system locations.
+
 ## v0.3.0
 
 - Uses the Marketplace extension identity

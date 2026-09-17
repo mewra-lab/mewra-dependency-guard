@@ -2,7 +2,7 @@
   "name": "mewra-dependency-guard-companion",
   "displayName": "Mewra Dependency Guard — Supply Chain Scan",
   "description": "OSV and Trivy lockfile vulnerability checks for Mewra PreFlight.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -29,6 +29,11 @@
       {
         "command": "mewra-dependency-guard.configureScanner",
         "title": "Set Up Scanner",
+        "category": "Mewra Dependency Guard"
+      },
+      {
+        "command": "mewra-dependency-guard.fullDependencyScan",
+        "title": "Run Full Dependency Scan",
         "category": "Mewra Dependency Guard"
       }
     ],

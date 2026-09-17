@@ -21,6 +21,8 @@ export type SecurityScanOptions = {
   mode: ScannerMode;
 };
 
+export type SecurityScanScope = "diff" | "workspace";
+
 type ScannerOutput = {
   scanner: ScannerName;
   file: string;
@@ -254,6 +256,103 @@ async function scanLockfile(
   };
 }
 
+async function scanLockfiles(
+  files: string[],
+  context: PreFlightContext,
+  mode: ScannerMode,
+): Promise<Awaited<ReturnType<typeof scanLockfile>>[]> {
+  const scans: Array<Awaited<ReturnType<typeof scanLockfile>>> = [];
+  let nextFile = 0;
+  const workerCount = Math.min(2, files.length);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextFile < files.length) {
+        const index = nextFile++;
+        const file = files[index];
+        if (!file) continue;
+        scans[index] = await scanLockfile(file, context, mode);
+      }
+    }),
+  );
+  return scans;
+}
+
+function lockfileLabel(count: number, scope: SecurityScanScope): string {
+  return `${scope === "diff" ? "changed " : ""}lockfile${count === 1 ? "" : "s"}`;
+}
+
+export async function runSecurityScan(
+  files: string[],
+  context: PreFlightContext,
+  options: SecurityScanOptions,
+  scope: SecurityScanScope,
+): Promise<CheckResult> {
+  if (files.length === 0) {
+    return {
+      status: "skipped",
+      findings: [],
+      message:
+        scope === "diff"
+          ? "No supported lockfiles changed in this diff."
+          : "No supported lockfiles found in this workspace.",
+    };
+  }
+
+  const scans = await scanLockfiles(files, context, options.mode);
+  const unscannableScans = scans.filter((scan) => scan.unscannable);
+  if (scans.every((scan) => !scan.configured)) {
+    return {
+      status: unscannableScans.length > 0 ? "warning" : "not-configured",
+      findings: [],
+      message:
+        unscannableScans.length > 0
+          ? `${unscannableScans.length} ${lockfileLabel(unscannableScans.length, scope)} could not be safely scanned.`
+          : options.mode === "docker"
+            ? "Docker is unavailable or the workspace path cannot be mounted safely."
+            : "OSV Scanner and Trivy are not available on PATH.",
+    };
+  }
+
+  const outputs = scans.flatMap((scan) => scan.outputs);
+  const failedScans = outputs.filter((output) => output.code !== 0);
+  const partialScans = scans.filter((scan) => scan.partial);
+  const parsedFindings = outputs.map(parseFindings);
+  const malformedScans = parsedFindings.filter((findings) => findings === null);
+  const findings = dedupeFindings(
+    parsedFindings.flatMap((findings) => findings ?? []),
+  );
+
+  if (findings.length > 0) {
+    return {
+      status: "fail",
+      findings,
+      message: `${findings.length} known vulnerabilit${findings.length === 1 ? "y" : "ies"} found in ${scope === "diff" ? "changed " : ""}lockfiles.`,
+    };
+  }
+  if (
+    failedScans.length > 0 ||
+    malformedScans.length > 0 ||
+    partialScans.length > 0 ||
+    unscannableScans.length > 0
+  ) {
+    return {
+      status: "warning",
+      findings,
+      message:
+        partialScans.length > 0
+          ? "Only one scanner is available. Install both OSV Scanner and Trivy for complete coverage."
+          : unscannableScans.length > 0
+            ? `${unscannableScans.length} ${lockfileLabel(unscannableScans.length, scope)} could not be safely scanned.`
+            : `${failedScans.length + malformedScans.length} scanner invocation${failedScans.length + malformedScans.length === 1 ? "" : "s"} could not complete. Review scanner output and retry.`,
+    };
+  }
+  return {
+    status: "pass",
+    findings: [],
+    message: `No known vulnerabilities found in ${scope === "diff" ? "changed " : ""}lockfiles.`,
+  };
+}
+
 export function buildSecurityScanCheck(
   options: SecurityScanOptions,
 ): CheckRunner {
@@ -271,71 +370,7 @@ export function buildSecurityScanCheck(
 
     async run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult> {
       const files = changedLockfiles(diff.changedFiles);
-      if (files.length === 0) {
-        return {
-          status: "skipped",
-          findings: [],
-          message: "No supported lockfiles changed in this diff.",
-        };
-      }
-
-      const scans = await Promise.all(
-        files.map((file) => scanLockfile(file, context, options.mode)),
-      );
-      const unscannableScans = scans.filter((scan) => scan.unscannable);
-      if (scans.every((scan) => !scan.configured)) {
-        return {
-          status: unscannableScans.length > 0 ? "warning" : "not-configured",
-          findings: [],
-          message:
-            unscannableScans.length > 0
-              ? `${unscannableScans.length} changed lockfile${unscannableScans.length === 1 ? " could" : "s could"} not be safely scanned.`
-              : options.mode === "docker"
-                ? "Docker is unavailable or the workspace path cannot be mounted safely."
-                : "OSV Scanner and Trivy are not available on PATH.",
-        };
-      }
-
-      const outputs = scans.flatMap((scan) => scan.outputs);
-      const failedScans = outputs.filter((output) => output.code !== 0);
-      const partialScans = scans.filter((scan) => scan.partial);
-      const parsedFindings = outputs.map(parseFindings);
-      const malformedScans = parsedFindings.filter(
-        (findings) => findings === null,
-      );
-      const findings = dedupeFindings(
-        parsedFindings.flatMap((findings) => findings ?? []),
-      );
-
-      if (findings.length > 0) {
-        return {
-          status: "fail",
-          findings,
-          message: `${findings.length} known vulnerabilit${findings.length === 1 ? "y" : "ies"} found in changed lockfiles.`,
-        };
-      }
-      if (
-        failedScans.length > 0 ||
-        malformedScans.length > 0 ||
-        partialScans.length > 0 ||
-        unscannableScans.length > 0
-      ) {
-        return {
-          status: "warning",
-          findings,
-          message:
-            partialScans.length > 0
-              ? "Only one scanner is available. Install both OSV Scanner and Trivy for complete coverage."
-              : unscannableScans.length > 0
-                ? `${unscannableScans.length} changed lockfile${unscannableScans.length === 1 ? " could" : "s could"} not be safely scanned.`
-                : `${failedScans.length + malformedScans.length} scanner invocation${failedScans.length + malformedScans.length === 1 ? "" : "s"} could not complete. Review scanner output and retry.`,
-        };
-      }
-      return {
-        status: "pass",
-        findings: [],
-        message: "No known vulnerabilities found in changed lockfiles.",
-      };
+      return runSecurityScan(files, context, options, "diff");
     },
   };
 }
