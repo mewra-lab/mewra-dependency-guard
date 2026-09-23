@@ -7,6 +7,7 @@ import type {
 } from "../shared/preflight-api.js";
 import {
   changedLockfiles,
+  discoverSupportedLockfiles,
   dockerWorkspacePath,
   resolveWorkspaceFile,
 } from "./lockfiles.js";
@@ -19,6 +20,7 @@ import { parseCvssVector } from "./cvss.js";
 
 export type SecurityScanOptions = {
   mode: ScannerMode;
+  scope?: SecurityScanScope;
 };
 
 export type SecurityScanScope = "diff" | "workspace";
@@ -356,6 +358,7 @@ export async function runSecurityScan(
 export function buildSecurityScanCheck(
   options: SecurityScanOptions,
 ): CheckRunner {
+  const scope = options.scope ?? "diff";
   return {
     id: "mewra-dependency-guard:security-scan",
     label: "Mewra Dependency Guard — Security Scan",
@@ -365,12 +368,32 @@ export function buildSecurityScanCheck(
     setupCommand: "mewra-dependency-guard.configureScanner",
 
     appliesTo(diff: GitDiff): boolean {
-      return changedLockfiles(diff.changedFiles).length > 0;
+      return (
+        scope === "workspace" || changedLockfiles(diff.changedFiles).length > 0
+      );
     },
 
     async run(diff: GitDiff, context: PreFlightContext): Promise<CheckResult> {
-      const files = changedLockfiles(diff.changedFiles);
-      return runSecurityScan(files, context, options, "diff");
+      if (scope === "workspace") {
+        const discovery = await discoverSupportedLockfiles(
+          context.workspaceRoot,
+        );
+        if (discovery.truncated) {
+          return {
+            status: "warning",
+            findings: [],
+            message:
+              "Full dependency scan found more than 32 supported lockfiles. Narrow the workspace before scanning.",
+          };
+        }
+        return runSecurityScan(discovery.files, context, options, "workspace");
+      }
+      return runSecurityScan(
+        changedLockfiles(diff.changedFiles),
+        context,
+        options,
+        "diff",
+      );
     },
   };
 }

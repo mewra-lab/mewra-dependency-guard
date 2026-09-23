@@ -91,6 +91,21 @@ Dependency Guard: Run Full Dependency Scan**.
 This command does not add results to the PreFlight dashboard or alter PR/MR
 gating. It is an explicit audit and never runs automatically.
 
+## Ignoring or changing enforcement
+
+Prefer fixing the dependency to the scanner's fixed version. If a finding is a
+documented, temporary exception, use the host's transparent controls:
+
+- Disable only the contributed Security Scan in `.mewra-preflight.json` with
+  `"mewra-dependency-guard:security-scan": { "enabled": false }`.
+- Keep it visible but non-blocking with `"severity": "warning"`.
+- Ignore a lockfile for this check in `.preflightignore`, for example
+  `pnpm-lock.yaml:mewra-dependency-guard:security-scan`.
+
+These controls are intentionally check/file scoped. The extension does not
+silently suppress an individual advisory ID; record the reason and expiry of
+any exception in your repository's security documentation.
+
 ## Configuration
 
 ```json
@@ -100,6 +115,24 @@ gating. It is an explicit audit and never runs automatically.
 ```
 
 `local` is the default. Docker mode is opt-in: it uses pinned OCI image digests, mounts the opened workspace read-only at `/workspace`, enables a temporary `/tmp` filesystem, drops Linux capabilities, and never mounts the Docker socket or uses privileged mode. Trivy stores its vulnerability database in the Docker-managed `mewra-dependency-guard-trivy-cache` volume; it is never written into the workspace.
+
+### Choosing the PreFlight scan scope
+
+The default `mewraDependencyGuard.securityScanScope` is `diff`, so a normal
+PreFlight run intentionally skips the Security Scan when no supported lockfile
+changed. To make the regular **Run PreFlight** action scan all supported
+workspace lockfiles, run **Mewra Dependency Guard: Configure Scan Scope** and
+choose **All workspace lockfiles**, or set:
+
+```json
+{
+  "mewraDependencyGuard.securityScanScope": "workspace"
+}
+```
+
+Workspace mode uses the same bounded discovery as the Full Dependency Scan and
+is still capped at 32 lockfiles. It is opt-in because it can be slower and may
+contact vulnerability databases on every run.
 
 The scanners may contact their vulnerability databases. Docker mode is not selected automatically, and neither mode uploads source code from the extension itself.
 

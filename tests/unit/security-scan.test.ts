@@ -141,6 +141,49 @@ describe("security scan", () => {
     });
   });
 
+  it("runs the workspace scope from PreFlight even when the diff is empty", async () => {
+    const check = buildSecurityScanCheck({
+      mode: "local",
+      scope: "workspace",
+    });
+    const commands: string[] = [];
+    const result = await check.run(
+      {
+        baseBranch: "main",
+        headBranch: "main",
+        changedFiles: [],
+        rawPatch: "",
+      },
+      context(
+        async (command) => {
+          commands.push(command);
+          return {
+            stdout: command.endsWith("osv-scanner")
+              ? '{"results":[]}'
+              : '{"Results":[]}',
+            stderr: "",
+            code: 0,
+          };
+        },
+        async (name) => `/trusted/${name}`,
+      ),
+    );
+
+    expect(
+      check.appliesTo({
+        baseBranch: "main",
+        headBranch: "main",
+        changedFiles: [],
+        rawPatch: "",
+      }),
+    ).toBe(true);
+    expect(result).toMatchObject({
+      status: "pass",
+      message: "No known vulnerabilities found in lockfiles.",
+    });
+    expect(commands).toHaveLength(6);
+  });
+
   it("warns instead of passing when a scanner emits malformed JSON", async () => {
     const check = buildSecurityScanCheck({ mode: "local" });
     const result = await check.run(
