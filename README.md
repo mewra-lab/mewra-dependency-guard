@@ -27,7 +27,7 @@ continues to work without changes.
 
 ## Install
 
-Install Mewra PreFlight v0.5.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight.
+Install Mewra PreFlight v0.5.0 or later first, then install this extension. It activates after VS Code starts and registers `mewra-dependency-guard:security-scan` and `dependency-guard:unsafe-source` with PreFlight. PreFlight v0.8.0 or later also shows the scope action directly on skipped rows.
 
 From the VS Code Marketplace, search **Mewra Dependency Guard** or run:
 
@@ -54,6 +54,8 @@ Dependency Guard, then reload the VS Code window.
 1. Open a repository and run **Mewra PreFlight: Run Pipeline**.
 2. Change a supported lockfile. The **Mewra Dependency Guard — Security Scan**
    row appears only when there is a relevant file in the diff.
+   If no lockfile changed, the skipped row opens with **Configure scope** so you
+   can opt into scanning all workspace lockfiles without leaving the dashboard.
 3. If the row shows `—`, click **Set up** and choose one execution mode:
    - **Use Docker (recommended)** saves the workspace setting to `docker`.
      Start Docker Desktop, then run the pipeline again.

@@ -50,6 +50,10 @@ describe("security scan", () => {
 
     expect(check.installable).toBe(false);
     expect(check.setupCommand).toBe("mewra-dependency-guard.configureScanner");
+    expect(check.actionCommand).toBe(
+      "mewra-dependency-guard.configureScanScope",
+    );
+    expect(check.actionLabel).toBe("Configure scope");
   });
 
   it("scans only changed supported lockfiles with trusted tools", async () => {
