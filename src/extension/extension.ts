@@ -6,6 +6,7 @@ import {
   runSecurityScan,
 } from "../core/security-scan.js";
 import type { ScannerMode } from "../core/scanner-command.js";
+import type { SecurityScanScope } from "../core/security-scan.js";
 import { dependencyUnsafeSourceCheck } from "../core/unsafe-source.js";
 import type { CheckResult, PreFlightApi } from "../shared/preflight-api.js";
 
@@ -29,6 +30,14 @@ function configuredScannerMode(): ScannerMode {
       .getConfiguration("mewraDependencyGuard")
       .get<unknown>("scannerMode", "local"),
   );
+}
+
+function configuredScanScope(): SecurityScanScope {
+  return vscode.workspace
+    .getConfiguration("mewraDependencyGuard")
+    .get<unknown>("securityScanScope", "diff") === "workspace"
+    ? "workspace"
+    : "diff";
 }
 
 async function selectWorkspaceRoot(): Promise<string | undefined> {
@@ -243,6 +252,42 @@ async function configureScanner(): Promise<void> {
   );
 }
 
+async function configureScanScope(): Promise<void> {
+  const selected = await vscode.window.showQuickPick(
+    [
+      {
+        label: "Changed lockfiles only (recommended)",
+        description: "Fast diff-scoped scans during normal PreFlight runs",
+        scope: "diff" as const,
+      },
+      {
+        label: "All workspace lockfiles",
+        description:
+          "Run a bounded full dependency scan every time PreFlight runs",
+        scope: "workspace" as const,
+      },
+    ],
+    {
+      title: "Dependency scan scope",
+      placeHolder: "Choose when Dependency Guard should run",
+    },
+  );
+  if (!selected) return;
+
+  await vscode.workspace
+    .getConfiguration("mewraDependencyGuard")
+    .update(
+      "securityScanScope",
+      selected.scope,
+      vscode.ConfigurationTarget.Workspace,
+    );
+  void vscode.window.showInformationMessage(
+    selected.scope === "workspace"
+      ? "Dependency Guard will scan all supported workspace lockfiles on each PreFlight run."
+      : "Dependency Guard will scan only lockfiles changed in the current diff.",
+  );
+}
+
 export async function activate(
   context: vscode.ExtensionContext,
 ): Promise<void> {
@@ -267,7 +312,10 @@ export async function activate(
     for (const registration of registrations) registration.dispose();
     registrations = [
       exported.registerCheck(
-        buildSecurityScanCheck({ mode: configuredScannerMode() }),
+        buildSecurityScanCheck({
+          mode: configuredScannerMode(),
+          scope: configuredScanScope(),
+        }),
       ),
       exported.registerCheck(dependencyUnsafeSourceCheck),
     ];
@@ -281,6 +329,10 @@ export async function activate(
       configureScanner,
     ),
     vscode.commands.registerCommand(
+      "mewra-dependency-guard.configureScanScope",
+      configureScanScope,
+    ),
+    vscode.commands.registerCommand(
       "mewra-dependency-guard.fullDependencyScan",
       () => runFullDependencyScan(output),
     ),
@@ -291,6 +343,11 @@ export async function activate(
     },
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("mewraDependencyGuard.scannerMode")) {
+        register();
+      }
+      if (
+        event.affectsConfiguration("mewraDependencyGuard.securityScanScope")
+      ) {
         register();
       }
     }),

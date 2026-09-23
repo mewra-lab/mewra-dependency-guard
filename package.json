@@ -2,7 +2,7 @@
   "name": "mewra-dependency-guard-companion",
   "displayName": "Mewra Dependency Guard — Supply Chain Scan",
   "description": "OSV and Trivy lockfile vulnerability checks for Mewra PreFlight.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "mewra",
   "license": "MIT",
   "pricing": "Free",
@@ -32,6 +32,11 @@
         "category": "Mewra Dependency Guard"
       },
       {
+        "command": "mewra-dependency-guard.configureScanScope",
+        "title": "Configure Scan Scope",
+        "category": "Mewra Dependency Guard"
+      },
+      {
         "command": "mewra-dependency-guard.fullDependencyScan",
         "title": "Run Full Dependency Scan",
         "category": "Mewra Dependency Guard"
@@ -48,6 +53,15 @@
           ],
           "default": "local",
           "description": "Run OSV Scanner and Trivy from the local PATH, or from pinned Docker images. Docker is opt-in and mounts the workspace read-only."
+        },
+        "mewraDependencyGuard.securityScanScope": {
+          "type": "string",
+          "enum": [
+            "diff",
+            "workspace"
+          ],
+          "default": "diff",
+          "description": "Scan only supported lockfiles changed in the current diff, or all supported lockfiles in the selected workspace on every PreFlight run."
         }
       }
     }

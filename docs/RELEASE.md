@@ -13,6 +13,14 @@ tracked only with a placeholder; VSIX files and checksums are ignored and the
 directory is excluded from the extension package. GitHub Releases remain the
 distributable archive of record.
 
+## v0.5.0
+
+- Adds opt-in `mewraDependencyGuard.securityScanScope: "workspace"` and a
+  **Configure Scan Scope** command so regular PreFlight runs can scan all
+  supported lockfiles even with no Git changes.
+- Keeps diff-scoped scanning as the default and documents transparent disable,
+  warning, and `.preflightignore` exceptions.
+
 ## v0.4.0
 
 - Adds **Mewra Dependency Guard: Run Full Dependency Scan** for an intentional

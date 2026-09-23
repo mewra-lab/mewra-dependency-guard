@@ -18,5 +18,7 @@ Unit tests cover the boundary between the PreFlight check contract and scanner e
 - full-scan discovery skips symbolic links and generated/dependency directories,
   has a deterministic bounded scope, and reuses the same scanner result
   normalization as the diff check.
+- workspace scan scope runs from a PreFlight check even with an empty diff;
+  diff scope remains the default.
 
 For a manual Docker smoke test, select `mewraDependencyGuard.scannerMode: "docker"`, change a supported lockfile, and run PreFlight. The extension may pull the pinned scanner images and Trivy database on first use. To exercise the explicit audit path, run **Mewra Dependency Guard: Run Full Dependency Scan** from the Command Palette; it must show results in the **Mewra Dependency Guard** output channel without changing the PreFlight dashboard.
