@@ -11,6 +11,7 @@ import { dependencyUnsafeSourceCheck } from "../core/unsafe-source.js";
 import type { CheckResult, PreFlightApi } from "../shared/preflight-api.js";
 
 const PREFLIGHT_EXTENSION_ID = "mewra.mewra-preflight";
+const PREFLIGHT_RUN_COMMAND = "mewra-preflight.runPipeline";
 
 function isPreFlightApi(value: unknown): value is PreFlightApi {
   if (typeof value !== "object" || value === null) return false;
@@ -248,8 +249,9 @@ async function configureScanner(): Promise<void> {
   }
 
   void vscode.window.showInformationMessage(
-    "Local mode selected. Ensure both osv-scanner and trivy are on PATH, then run PreFlight again.",
+    "Local mode selected. Re-running PreFlight now; both scanners must be on PATH.",
   );
+  await vscode.commands.executeCommand(PREFLIGHT_RUN_COMMAND);
 }
 
 async function configureScanScope(): Promise<void> {
@@ -283,9 +285,10 @@ async function configureScanScope(): Promise<void> {
     );
   void vscode.window.showInformationMessage(
     selected.scope === "workspace"
-      ? "Dependency Guard will scan all supported workspace lockfiles on each PreFlight run."
-      : "Dependency Guard will scan only lockfiles changed in the current diff.",
+      ? "Dependency Guard will scan all supported workspace lockfiles. Re-running PreFlight now."
+      : "Dependency Guard will scan only lockfiles changed in the current diff. Re-running PreFlight now.",
   );
+  await vscode.commands.executeCommand(PREFLIGHT_RUN_COMMAND);
 }
 
 export async function activate(

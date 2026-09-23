@@ -367,7 +367,7 @@ export function buildSecurityScanCheck(
     installable: false,
     setupCommand: "mewra-dependency-guard.configureScanner",
     actionCommand: "mewra-dependency-guard.configureScanScope",
-    actionLabel: "Configure scope",
+    actionLabel: "Configure scan scope",
 
     appliesTo(diff: GitDiff): boolean {
       return (

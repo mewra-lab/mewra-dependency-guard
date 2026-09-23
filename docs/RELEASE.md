@@ -13,9 +13,16 @@ tracked only with a placeholder; VSIX files and checksums are ignored and the
 directory is excluded from the extension package. GitHub Releases remain the
 distributable archive of record.
 
+## v0.7.0
+
+- Renames the skipped-row action to **Configure scan scope** for clearer intent.
+- Reruns PreFlight automatically after a scan scope is saved.
+- Reruns PreFlight after selecting existing local scanners; Docker and Homebrew
+  setup remain explicit because they may require external environment changes.
+
 ## v0.6.0
 
-- Adds a **Configure scope** action to the skipped PreFlight security-scan row.
+- Adds a **Configure scan scope** action to the skipped PreFlight security-scan row.
 - Keeps diff-scoped scanning as the default while making the existing workspace
   scope setting discoverable from the dashboard.
 - Requires a PreFlight host that supports the additive check action metadata;

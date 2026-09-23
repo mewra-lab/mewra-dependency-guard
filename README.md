@@ -54,7 +54,7 @@ Dependency Guard, then reload the VS Code window.
 1. Open a repository and run **Mewra PreFlight: Run Pipeline**.
 2. Change a supported lockfile. The **Mewra Dependency Guard — Security Scan**
    row appears only when there is a relevant file in the diff.
-   If no lockfile changed, the skipped row opens with **Configure scope** so you
+   If no lockfile changed, the skipped row opens with **Configure scan scope** so you
    can opt into scanning all workspace lockfiles without leaving the dashboard.
 3. If the row shows `—`, click **Set up** and choose one execution mode:
    - **Use Docker (recommended)** saves the workspace setting to `docker`.
@@ -63,8 +63,9 @@ Dependency Guard, then reload the VS Code window.
      `brew install osv-scanner trivy` in a visible terminal on macOS after you
      select that option.
    - **Use existing local tools** selects `local` mode when both binaries are
-     already on `PATH`.
-4. Run the pipeline again. A green check means both scanners completed without
+     already on `PATH` and reruns PreFlight automatically.
+4. If you selected Docker or Homebrew, start/finish the installation and run
+   PreFlight again. A green check means both scanners completed without
    known vulnerability findings; a warning explains partial or unsuccessful
    scans, and a red result lists detected vulnerabilities.
 
@@ -124,7 +125,8 @@ The default `mewraDependencyGuard.securityScanScope` is `diff`, so a normal
 PreFlight run intentionally skips the Security Scan when no supported lockfile
 changed. To make the regular **Run PreFlight** action scan all supported
 workspace lockfiles, run **Mewra Dependency Guard: Configure Scan Scope** and
-choose **All workspace lockfiles**, or set:
+choose **All workspace lockfiles**. PreFlight reruns automatically after the
+scope is saved, or you can set it directly:
 
 ```json
 {
