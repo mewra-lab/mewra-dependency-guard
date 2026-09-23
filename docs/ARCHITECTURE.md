@@ -44,3 +44,8 @@ including an empty diff. In that mode the runner calls the same bounded
 discovery and scanner pipeline; the default remains `diff`. Host-level
 `.mewra-preflight.json` and `.preflightignore` controls remain visible and
 auditable after findings are produced.
+
+The security check contributes a host-resolved scope action. When the default
+diff-scoped check has no matching lockfile, PreFlight shows **Configure scope**
+on the skipped row. The Webview sends only the check ID; the host resolves and
+validates the registered VS Code command before executing it.
